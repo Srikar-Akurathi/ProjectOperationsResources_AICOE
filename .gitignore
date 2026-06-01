@@ -1,0 +1,22 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet packages (restored by CI)
+packages/
+*.nupkg
+
+# Rider/ReSharper
+.idea/
+*.DotSettings.user
+
+# Windows
+Thumbs.db
+Desktop.ini
