@@ -1,0 +1,62 @@
+name: Build and Deploy Plugin
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install Power Platform Tools
+      uses: microsoft/powerplatform-actions/actions-install@v1
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore ProjectOperationsPlugins/ProjectOperationsPlugins.sln
+
+    - name: Build plugin DLL
+      run: |
+        msbuild ProjectOperationsPlugins/ProjectOperationsPlugins.sln /p:Configuration=Release /p:Platform="Any CPU"
+
+    - name: Copy DLL to solution
+      shell: pwsh
+      run: |
+        $dll = "ProjectOperationsPlugins/ProjectOperationsPlugins/bin/Release/ProjectOperationsPlugins.dll"
+        $dest = Get-ChildItem -Path "solution/PluginAssemblies" -Directory | Select-Object -First 1
+        Copy-Item $dll "$($dest.FullName)/ProjectOperationsPlugins.dll" -Force
+        Write-Host "Copied to: $($dest.FullName)"
+
+    - name: Pack solution
+      uses: microsoft/powerplatform-actions/pack-solution@v1
+      with:
+        solution-file: solution_output/ProjectOperationsPlugins.zip
+        solution-folder: solution
+        solution-type: Unmanaged
+
+    - name: Import solution to Dataverse
+      uses: microsoft/powerplatform-actions/import-solution@v1
+      with:
+        environment-url: ${{ secrets.DATAVERSE_URL }}
+        app-id: ${{ secrets.CLIENT_ID }}
+        client-secret: ${{ secrets.CLIENT_SECRET }}
+        tenant-id: ${{ secrets.TENANT_ID }}
+        solution-file: solution_output/ProjectOperationsPlugins.zip
+        activate-plugins: true
+        force-overwrite: true
+
+    - name: Upload solution artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ProjectOperationsPlugins-solution
+        path: solution_output/ProjectOperationsPlugins.zip
