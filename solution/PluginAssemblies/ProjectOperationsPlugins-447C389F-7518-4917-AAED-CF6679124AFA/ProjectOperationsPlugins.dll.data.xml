@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PluginAssembly FullName="ProjectOperationsPlugins, Version=1.0.0.0, Culture=neutral, PublicKeyToken=e4149f67f615d0d1" PluginAssemblyId="447c389f-7518-4917-aaed-cf6679124afa" CustomizationLevel="1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <IsolationMode>2</IsolationMode>
+  <SourceType>0</SourceType>
+  <IntroducedVersion>1.0</IntroducedVersion>
+  <FileName>/PluginAssemblies/ProjectOperationsPlugins-447C389F-7518-4917-AAED-CF6679124AFA/ProjectOperationsPlugins.dll</FileName>
+  <PluginTypes>
+    <PluginType AssemblyQualifiedName="ProjectOperationsPlugins.CapitalizeText, ProjectOperationsPlugins, Version=1.0.0.0, Culture=neutral, PublicKeyToken=e4149f67f615d0d1" PluginTypeId="c8b7c90d-f1c3-46be-abe1-657911ed4bbc" Name="ProjectOperationsPlugins.CapitalizeText">
+      <FriendlyName>c007b6e6-bc9c-40d0-934d-409df6fc8b24</FriendlyName>
+    </PluginType>
+  </PluginTypes>
+</PluginAssembly>
