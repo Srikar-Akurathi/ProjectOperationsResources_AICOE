@@ -1,39 +1,43 @@
-name: Build and Deploy Plugin
+name: Build and Deploy Plugin + Azure Function
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+permissions:
+  contents: write
+
 jobs:
-  build-and-deploy:
+  # ── Job 1: Plugin + Solution Deploy ─────────────────────────
+  build-and-deploy-plugin:
     runs-on: windows-latest
     steps:
-    # ── 1. Checkout code ──────────────────────────────────────
     - name: Checkout repository
       uses: actions/checkout@v5
-    # ── 2. Setup MSBuild ──────────────────────────────────────
+
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
-    # ── 3. Setup NuGet ────────────────────────────────────────
+
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v2
-    # ── 4. Restore NuGet packages ─────────────────────────────
+
     - name: Restore NuGet packages
       run: nuget restore ProjectOperationsPlugins/ProjectOperationsPlugins.sln
-    # ── 5. Build & Sign the plugin DLL ────────────────────────
-    - name: Build plugin
+
+    - name: Build plugin DLL
       run: |
         msbuild ProjectOperationsPlugins/ProjectOperationsPlugins.sln /p:Configuration=Release /p:Platform="Any CPU"
-    # ── 6. Copy DLL into solution folder ──────────────────────
+
     - name: Copy DLL to solution
       shell: pwsh
       run: |
         $dll = "ProjectOperationsPlugins/ProjectOperationsPlugins/bin/Release/ProjectOperationsPlugins.dll"
         $dest = "solution/PluginAssemblies/ProjectOperationsPlugins-447C389F-7518-4917-AAED-CF6679124AFA/"
         Copy-Item $dll $dest -Force
-    # ── 7. Install PAC CLI ────────────────────────────────────
+
     - name: Install PAC CLI
       shell: pwsh
       run: |
@@ -41,7 +45,7 @@ jobs:
         $pac = Get-ChildItem -Path pac -Recurse -Filter "pac.exe" | Select-Object -First 1
         Write-Host "PAC CLI: $($pac.FullName)"
         echo "PAC_PATH=$($pac.FullName)" >> $env:GITHUB_ENV
-    # ── 8. Pack the solution ──────────────────────────────────
+
     - name: Pack solution
       shell: pwsh
       run: |
@@ -50,7 +54,7 @@ jobs:
           --zipfile solution_output/ProjectOperationsPlugins.zip `
           --folder solution `
           --packagetype Unmanaged
-    # ── 9. Update solution zip in repo ────────────────────────
+
     - name: Commit updated solution zip
       shell: pwsh
       run: |
@@ -65,7 +69,7 @@ jobs:
         } else {
           Write-Host "No changes to commit"
         }
-    # ── 10. Import solution to Dataverse ──────────────────────
+
     - name: Import solution to Dataverse
       shell: pwsh
       run: |
@@ -83,9 +87,35 @@ jobs:
         CLIENT_ID: ${{ secrets.CLIENT_ID }}
         CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
         TENANT_ID: ${{ secrets.TENANT_ID }}
-    # ── 11. Upload zip as artifact ────────────────────────────
+
     - name: Upload solution zip
       uses: actions/upload-artifact@v5
       with:
         name: ProjectOperationsPlugins-solution
         path: solution_output/ProjectOperationsPlugins.zip
+
+  # ── Job 2: Azure Function Deploy ────────────────────────────
+  deploy-azure-function:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Build Azure Function
+      run: |
+        cd ProjectOperationsAzFunc
+        dotnet restore
+        dotnet build --configuration Release
+        dotnet publish --configuration Release --output ./publish
+
+    - name: Deploy to Azure Function App
+      uses: Azure/functions-action@v1
+      with:
+        app-name: project-ops-azfunc
+        package: ProjectOperationsAzFunc/publish
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
