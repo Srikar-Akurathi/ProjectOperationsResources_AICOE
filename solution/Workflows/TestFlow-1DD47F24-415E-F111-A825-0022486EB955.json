@@ -79,7 +79,7 @@
             "parameters": {
               "entityName": "msdyn_projects",
               "recordId": "@triggerBody()?['entity']['msdyn_projectid']",
-              "item/msdyn_description": "The description was updated by Power Automate @{triggerOutputs()?['headers']?['x-ms-user-timestamp']}"
+              "item/msdyn_description": "The description was updated by Power Automate after commit @{triggerOutputs()?['headers']?['x-ms-user-timestamp']}"
             },
             "host": {
               "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
