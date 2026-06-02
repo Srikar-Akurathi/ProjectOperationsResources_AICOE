@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,13 +27,24 @@ namespace ProjectOperationsPlugins
                     if (entity.Contains("msdyn_subject") && entity["msdyn_subject"] != null)
                     {
                         string originalValue = entity["msdyn_subject"].ToString();
-                        string capitalizedValue = originalValue.ToUpper() + "_WORKFLOW_WORKING_1";
+                        TextInfo textInfo = CultureInfo.CurrentCulture.TextInfo;
+                        string capitalizedValue = textInfo.ToTitleCase(
+                            originalValue.ToLower(CultureInfo.CurrentCulture)) + " | Updated";
 
                         entity["msdyn_subject"] = capitalizedValue;
 
                         tracingService.Trace("msdyn_subject changed: {0} → {1}",
                             originalValue, capitalizedValue);
                     }
+
+                    string originalDescription = entity.Contains("msdyn_description") && entity["msdyn_description"] != null
+                        ? entity["msdyn_description"].ToString()
+                        : string.Empty;
+                    string updatedDescription =
+                        $"Last modified by CapitalizeText plugin on {DateTime.UtcNow:O}";
+                    entity["msdyn_description"] = updatedDescription;
+                    tracingService.Trace("msdyn_description changed: {0} → {1}",
+                        originalDescription, updatedDescription);
                 }
             }
             catch (InvalidPluginExecutionException)
