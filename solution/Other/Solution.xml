@@ -6,7 +6,7 @@
       <LocalizedName description="ProjectOperationsPluginsSolution" languagecode="1033" />
     </LocalizedNames>
     <Descriptions />
-    <Version>1.0.0.0</Version>
+    <Version>1.0.0.1</Version>
     <Managed>0</Managed>
     <Publisher>
       <UniqueName>Cr52a0f</UniqueName>
@@ -78,10 +78,17 @@
       </Addresses>
     </Publisher>
     <RootComponents>
+      <RootComponent type="29" id="{1dd47f24-415e-f111-a825-0022486eb955}" behavior="0" />
       <RootComponent type="91" id="{447c389f-7518-4917-aaed-cf6679124afa}" schemaName="ProjectOperationsPlugins, Version=1.0.0.0, Culture=neutral, PublicKeyToken=e4149f67f615d0d1" behavior="0" />
       <RootComponent type="92" id="{c188a7b0-705d-f111-a825-e4fb1efcc6c0}" behavior="0" />
     </RootComponents>
     <MissingDependencies>
+      <MissingDependency>
+        <Required type="1" schemaName="msdyn_project" displayName="Project" solution="msdyn_ProjectServiceCore (1.0.0.87)">
+          <package appName="Project Operations" version="4.166.3415.1">ProjectOperations_Anchor (4.166.3415.1)</package>
+        </Required>
+        <Dependent type="29" displayName="Test Flow" id="{1dd47f24-415e-f111-a825-0022486eb955}" />
+      </MissingDependency>
       <MissingDependency>
         <Required type="1" schemaName="msdyn_project" displayName="Project" solution="msdyn_ProjectServiceCore (1.0.0.87)">
           <package appName="Project Operations" version="4.166.3415.1">ProjectOperations_Anchor (4.166.3415.1)</package>

@@ -1,0 +1,101 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        },
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_94ef0"
+        },
+        "runtimeSource": "embedded"
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        }
+      },
+      "triggers": {
+        "manual": {
+          "type": "Request",
+          "kind": "ApiConnection",
+          "inputs": {
+            "operationId": "RecordSelected",
+            "parameters": {
+              "entityName": "msdyn_projects"
+            },
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "entity": {
+                        "properties": {
+                          "msdyn_projectid": {
+                            "title": "Project",
+                            "type": "string",
+                            "format": "guid"
+                          }
+                        },
+                        "type": "object",
+                        "required": []
+                      }
+                    }
+                  }
+                }
+              },
+              "required": [
+                "rows"
+              ]
+            },
+            "host": {
+              "connection": {
+                "name": "@parameters('$connections')['shared_commondataserviceforapps']['connectionId']"
+              }
+            }
+          },
+          "splitOn": "@triggerBody()['rows']",
+          "metadata": {
+            "operationMetadataId": "7f14d587-093c-4d63-ae78-259b8d1e86d4"
+          }
+        }
+      },
+      "actions": {
+        "Update_a_row": {
+          "type": "OpenApiConnection",
+          "inputs": {
+            "parameters": {
+              "entityName": "msdyn_projects",
+              "recordId": "@triggerBody()?['entity']['msdyn_projectid']",
+              "item/msdyn_description": "The description was updated by Power Automate @{triggerOutputs()?['headers']?['x-ms-user-timestamp']}"
+            },
+            "host": {
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+              "operationId": "UpdateOnlyRecord",
+              "connectionName": "shared_commondataserviceforapps"
+            }
+          },
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "65287c3c-d454-40b3-8ab1-bc5986cea0e2"
+          }
+        }
+      },
+      "outputs": {}
+    },
+    "templateName": null
+  },
+  "schemaVersion": "1.0.0.0"
+}
