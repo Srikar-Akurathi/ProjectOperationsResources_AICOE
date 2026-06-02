@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ProjectOperationsAzFunc": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7204",
+      "launchBrowser": false
+    }
+  }
+}
