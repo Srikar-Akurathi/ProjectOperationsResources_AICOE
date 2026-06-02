@@ -1,61 +1,72 @@
 name: Build and Deploy Plugin
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
 jobs:
   build-and-deploy:
     runs-on: windows-latest
-
     steps:
-    - name: Checkout
+    # ── 1. Checkout code ──────────────────────────────────────
+    - name: Checkout repository
       uses: actions/checkout@v4
-
-    - name: Install Power Platform Tools
-      uses: microsoft/powerplatform-actions/actions-install@v1
-
+    # ── 2. Setup MSBuild ──────────────────────────────────────
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
-
+    # ── 3. Setup NuGet ────────────────────────────────────────
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v2
-
+    # ── 4. Restore NuGet packages ─────────────────────────────
     - name: Restore NuGet packages
       run: nuget restore ProjectOperationsPlugins/ProjectOperationsPlugins.sln
-
-    - name: Build plugin DLL
+    # ── 5. Build & Sign the plugin DLL ────────────────────────
+    - name: Build plugin
       run: |
         msbuild ProjectOperationsPlugins/ProjectOperationsPlugins.sln /p:Configuration=Release /p:Platform="Any CPU"
-
+    # ── 6. Copy DLL into solution folder ──────────────────────
     - name: Copy DLL to solution
       shell: pwsh
       run: |
         $dll = "ProjectOperationsPlugins/ProjectOperationsPlugins/bin/Release/ProjectOperationsPlugins.dll"
-        $dest = Get-ChildItem -Path "solution/PluginAssemblies" -Directory | Select-Object -First 1
-        Copy-Item $dll "$($dest.FullName)/ProjectOperationsPlugins.dll" -Force
-        Write-Host "Copied to: $($dest.FullName)"
-
+        $dest = "solution/PluginAssemblies/ProjectOperationsPlugins-447C389F-7518-4917-AAED-CF6679124AFA/"
+        Copy-Item $dll $dest -Force
+    # ── 7. Install PAC CLI ────────────────────────────────────
+    - name: Install PAC CLI
+      shell: pwsh
+      run: |
+        nuget install Microsoft.PowerApps.CLI -OutputDirectory pac
+        $pac = Get-ChildItem -Path pac -Recurse -Filter "pac.exe" | Select-Object -First 1
+        Write-Host "PAC CLI: $($pac.FullName)"
+        echo "PAC_PATH=$($pac.FullName)" >> $env:GITHUB_ENV
+    # ── 8. Pack the solution ──────────────────────────────────
     - name: Pack solution
-      uses: microsoft/powerplatform-actions/pack-solution@v1
-      with:
-        solution-file: solution_output/ProjectOperationsPlugins.zip
-        solution-folder: solution
-        solution-type: Unmanaged
-
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path solution_output
+        & $env:PAC_PATH solution pack `
+          --zipfile solution_output/ProjectOperationsPlugins.zip `
+          --folder solution `
+          --packagetype Unmanaged
+    # ── 9. Import solution to Dataverse ───────────────────────
     - name: Import solution to Dataverse
-      uses: microsoft/powerplatform-actions/import-solution@v1
-      with:
-        environment-url: ${{ secrets.DATAVERSE_URL }}
-        app-id: ${{ secrets.CLIENT_ID }}
-        client-secret: ${{ secrets.CLIENT_SECRET }}
-        tenant-id: ${{ secrets.TENANT_ID }}
-        solution-file: solution_output/ProjectOperationsPlugins.zip
-        activate-plugins: true
-        force-overwrite: true
-
-    - name: Upload solution artifact
+      shell: pwsh
+      run: |
+        & $env:PAC_PATH auth create `
+          --url $env:DATAVERSE_URL `
+          --applicationId $env:CLIENT_ID `
+          --clientSecret $env:CLIENT_SECRET `
+          --tenant $env:TENANT_ID
+        & $env:PAC_PATH solution import `
+          --path solution_output/ProjectOperationsPlugins.zip `
+          --activate-plugins true `
+          --force-overwrite true
+      env:
+        DATAVERSE_URL: ${{ secrets.DATAVERSE_URL }}
+        CLIENT_ID: ${{ secrets.CLIENT_ID }}
+        CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        TENANT_ID: ${{ secrets.TENANT_ID }}
+    # ── 10. Upload zip as artifact ────────────────────────────
+    - name: Upload solution zip
       uses: actions/upload-artifact@v4
       with:
         name: ProjectOperationsPlugins-solution
