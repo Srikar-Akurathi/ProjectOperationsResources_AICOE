@@ -26,7 +26,7 @@ namespace ProjectOperationsPlugins
                     if (entity.Contains("msdyn_subject") && entity["msdyn_subject"] != null)
                     {
                         string originalValue = entity["msdyn_subject"].ToString();
-                        string capitalizedValue = originalValue.ToUpper() + "_WORKFLOW_WORKING_1";
+                        string capitalizedValue = originalValue.ToUpper() + "_jdnfsdjkkjdsbfk";
 
                         entity["msdyn_subject"] = capitalizedValue;
 
